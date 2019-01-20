@@ -235,10 +235,10 @@ def game_loop():
     Big = BigCat()
     Cats.add(Small)
     Cats.add(Big)
-    PlatformList = Levels(2)
+    PlatformList = Levels(1)
     for platform in PlatformList:
         Platforms.add(platform)
-    Level = 2
+    Level = 1
 
     while game_run == True:
 
