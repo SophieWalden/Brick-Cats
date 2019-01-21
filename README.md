@@ -4,3 +4,4 @@
 
 #Change Log:
 #1/20/19: Uploaded the basic game to Github. Has 2 levels and the base mechanics
+#1/20/19: Added Images to the game. Also changed the name from 2 Cats to Brick Cats.
