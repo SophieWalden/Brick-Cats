@@ -29,6 +29,16 @@ pygame.display.set_caption("Name")
 Cats = pygame.sprite.Group()
 Platforms = pygame.sprite.Group()
 
+def load_images(path_to_directory):
+    images = {}
+    for dirpath, dirnames, filenames in os.walk(path_to_directory):
+        for name in filenames:
+            if name.endswith('.png'):
+                key = name[:-4]
+                img = pygame.image.load(os.path.join(dirpath, name)).convert_alpha()
+                images[key] = img
+    return images
+
 #The bigger slower cat
 class BigCat(pygame.sprite.Sprite):
     def __init__(self):
@@ -44,8 +54,18 @@ class BigCat(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.chose = False
         self.JumpAllowed = True
-    def draw(self):
-        pygame.draw.rect(gameDisplay,(100,50,50),(self.x,self.y,75,50),0)
+        self.direction = "Right"
+    def draw(self,Images):
+        if self.x_change == 0:
+            if self.direction == "Right":
+                gameDisplay.blit(Images["BigCatSittingRight"],(self.x,self.y+4))
+            else:
+                gameDisplay.blit(Images["BigCatSittingLeft"],(self.x,self.y+4))
+        else:
+            if self.x_change > 0:
+                gameDisplay.blit(Images["BigCatRight"],(self.x,self.y))
+            else:
+                gameDisplay.blit(Images["BigCatLeft"],(self.x,self.y))
     def KeyPress(self):
         if self.chose == True:
             key = pygame.key.get_pressed()
@@ -54,13 +74,18 @@ class BigCat(pygame.sprite.Sprite):
                 self.JumpAllowed = False
             if key[ord('d')]:
                 self.x_change = 5
+                self.direction = "Right"
             if key[ord('a')]:
                 self.x_change = -5
+                self.direction = "Left"
             if self.x_change == 5 and key[ord('d')]  == 0:
                 self.x_change = 0
             if self.x_change == -5 and key[ord('a')]  == 0:
                 self.x_change = 0
-        self.x += self.x_change
+        if self.x_change == 5 and self.x < DisplayWidth - 75:
+            self.x += self.x_change
+        if self.x_change == -5 and self.x - 5 > -5:
+            self.x += self.x_change
     def Gravity(self):
         self.y += self.gravity
         if self.gravity == 0:
@@ -88,10 +113,10 @@ class BigCat(pygame.sprite.Sprite):
                 if self.y > platform.y and self.gravity < 0:
                     self.gravity = 0
                 
-    def update(self, Small):
+    def update(self, Small,Images):
         self.Collision(Small)
         self.KeyPress()
-        self.draw()
+        self.draw(Images)
         self.Gravity()
         self.rect.left = self.x
         self.rect.right = self.x+75
@@ -116,8 +141,21 @@ class SmallCat(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.chose = True
         self.JumpAllowed = True
-    def draw(self):
-        pygame.draw.rect(gameDisplay,(150,50,50),(self.x,self.y,37,25),0)
+        self.direction = "Right"
+    def draw(self, Images):
+        if self.x_change == 0:
+            if self.direction == "Right":
+                gameDisplay.blit(Images["SmallCatSittingRight"],(self.x,self.y+5))
+            else:
+                gameDisplay.blit(Images["SmallCatSittingLeft"],(self.x,self.y+5))
+
+        else:
+            if self.x_change > 0:
+                gameDisplay.blit(Images["SmallCatRight"],(self.x,self.y))
+            else:
+                gameDisplay.blit(Images["SmallCatLeft"],(self.x,self.y))
+
+
     def KeyPress(self):
         if self.chose == True:
             key = pygame.key.get_pressed()
@@ -126,13 +164,18 @@ class SmallCat(pygame.sprite.Sprite):
                 self.JumpAllowed = False
             if key[ord('d')]:
                 self.x_change = 8
+                self.direction = "Right"
             if key[ord('a')]:
                 self.x_change = -8
+                self.direction = "Left"
             if self.x_change == 8 and key[ord('d')]  == 0:
                 self.x_change = 0
             if self.x_change == -8 and key[ord('a')]  == 0:
                 self.x_change = 0
-        self.x += self.x_change
+        if self.x_change == 8 and self.x < DisplayWidth - 37:
+            self.x += self.x_change
+        if self.x_change == -8 and self.x - 8 > -8:
+            self.x += self.x_change
     def Gravity(self):
         self.y += self.gravity
         if self.gravity == 0:
@@ -148,9 +191,14 @@ class SmallCat(pygame.sprite.Sprite):
     def Collision(self, Big):
         if pygame.sprite.collide_rect(self, Big) == True:
             if self.y < Big.y - (Big.size[1] - self.size[1]) + 10 and self.gravity > 0:
+                if Big.gravity < 0:
+                    self.gravity = Big.gravity
                 self.JumpAllowed = True
                 self.gravity = 0
-                self.y = Big.y - 25
+                if Big.x_change != 0:
+                    self.y = Big.y - 23
+                else:
+                    self.y = Big.y - 17
         for platform in Platforms:
             if pygame.sprite.collide_rect(self, platform) == True:
                 if self.y < platform.y and self.gravity > 0:
@@ -161,15 +209,15 @@ class SmallCat(pygame.sprite.Sprite):
                     self.x = platform.x - 37
                     self.x_change = 0
                 elif self.x_change < 0 and self.y > platform.y and self.y < platform.y + platform.height - 5:
-                    self.x = platform.x + 37
+                    self.x = platform.x + platform.width
                     self.x_change = 0
                 if self.y > platform.y and self.gravity < 0:
                     self.gravity = 0
         
-    def update(self, Big):
+    def update(self, Big, Images):
         self.Collision(Big)
         self.KeyPress()
-        self.draw()
+        self.draw(Images)
         self.Gravity()
         self.rect.left = self.x
         self.rect.right = self.x+37
@@ -203,6 +251,7 @@ def Levels(Level):
                      Platform(300,400,200,50),
                      Platform(600,300,400,100)]
     if Level == 2:
+        
         Platforms = [Platform(400,620,100,150),
                      Platform(650,600,200,50),
                      Platform(900,700,75,25),
@@ -214,9 +263,16 @@ def Levels(Level):
 def LevelCheck(Level, Small, Big, PlatformList):
     if Level == 1:
         if Small.y < 300 and Small.x > 600:
-            PlatformList.append(Platform(100,500,100,50))
+            stop = False
+            for platform in PlatformList:
+                if platform.x == 100 and platform.y == 500:
+                    stop = True
+            if stop == False:
+                PlatformList.append(Platform(100,500,100,50))
         if Small.y < 300 and Big.y < 300 and Small.x > 800 and Big.x > 800:
             Level += 1
+            for platform in Platforms:
+                Platforms.remove(platform)
             PlatformList = Levels(Level)
             Small.x = 125
             Big.x = 100
@@ -231,6 +287,7 @@ def LevelCheck(Level, Small, Big, PlatformList):
 
 def game_loop():
     game_run = True
+    Images = load_images("Images")
     Small = SmallCat()
     Big = BigCat()
     Cats.add(Small)
@@ -260,8 +317,8 @@ def game_loop():
                         Small.x_change = 0
 
 
-        Big.update(Small)
-        Small.update(Big)
+        Big.update(Small, Images)
+        Small.update(Big, Images)
 
         for platform in PlatformList:
             platform.draw()
