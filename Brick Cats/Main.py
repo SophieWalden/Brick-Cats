@@ -35,7 +35,7 @@ def load_images(path_to_directory):
         for name in filenames:
             if name.endswith('.png'):
                 key = name[:-4]
-                if key != "Background":
+                if key != "HouseBackground":
                     img = pygame.image.load(os.path.join(dirpath, name)).convert_alpha()
                 else:
                     img = pygame.image.load(os.path.join(dirpath, name)).convert()
